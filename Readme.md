@@ -1,25 +1,66 @@
-# switchstream
+# switch-writable <sup>*WIP*</sup>
 
-Change where data flows as it passes through the switchstream.
+> **Dynamically select a stream's writable target.**  
+> Adapted from [switchstream](https://github.com/timoxley/switchstream).
 
 ```js
-var Switchstream = require('switchstream')
+const Switch = require('switch-writable')
+const from = require('from2-array').obj
+const fs = require('fs')
 
-var switchstream = Switchstream(function(data) {
-  // return the key of the stream you want to
-  // pipe this data to
-  if (data === 'a') return 'stream a'
-  if (data === 'b') return 'stream b'
-})
-
-from(['a', 'b',  'a', 'a', 'b']) // example data
-.pipe(switchstream.between({
-  'stream-a': fs.createWriteStream('a.txt'),
-  'stream-b': fs.createWriteStream('b.txt')
-}))
-
-// result will be a.txt with the three a's and b.txt with the two b's
+from(['a', 'b', 'a', 'a'])
+  .pipe(Switch(data => {
+    if (data === 'a') return 'a'
+    if (data === 'b') return 'b'
+  }).between({
+    a: fs.createWriteStream('a.txt'), // 'aaa'
+    b: fs.createWriteStream('b.txt') // 'b'
+  }))
 ```
 
+If the stream or any of the target streams error or close prematurely, all other streams are destroyed. This also happens if the switch function returns a key for which there is no stream (e.g. `c` in the example above).
+
+Target streams can be created lazily:
+
+```js
+Switch(data => {
+  if (data === 'a') return 'a'
+  if (data === 'b') return 'b'
+}).between({
+  a: () => fs.createWriteStream('a.txt'),
+  b: () => fs.createWriteStream('b.txt')
+})
+```
+
+The list of streams can be an array:
+
+```js
+Switch(data => {
+  if (data === 'a') return 0
+  if (data === 'b') return 1
+}).between([
+  fs.createWriteStream('a.txt'),
+  fs.createWriteStream('b.txt')
+])
+```
+
+Lastly, a default key can be provided, for when no stream matches the key or when no key is returned:
+
+```js
+Switch({ default: 1 }, (data) => null).between([
+  fs.createWriteStream('a.txt'),
+  fs.createWriteStream('b.txt')
+])
+```
+
+## Other differences from `switchstream`
+
+- Is and takes a writable stream instead of a duplex stream
+- Has backpressure (is as slow as the slowest target)
+- Has and expects `destroy()` semantics of Node 8+
+- Doesn't coerce keys to the right type (string or number)
+- Doesn't support async map function.
+
 ## Licence
-MIT
+
+[MIT](LICENSE) © 2018-present Vincent Weevers. Adapted from `switchstream` © Tim Oxley.

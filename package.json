@@ -1,38 +1,35 @@
 {
-  "name": "switchstream",
+  "name": "switch-writable",
   "version": "1.0.0",
-  "description": "Dynamically update a stream's output destination.",
-  "main": "index.js",
-  "scripts": {
-    "test": "node test/index.js"
-  },
-  "author": "Tim Oxley",
+  "description": "Dynamically select a stream's writable target",
   "license": "MIT",
+  "author": "Vincent Weevers",
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "test": "node test"
+  },
   "dependencies": {
-    "through2": "~0.6.3",
-    "duplexer2": "0.0.2",
-    "readable-stream": "~1.1.9"
+    "after": "~0.8.2",
+    "readable-stream": "~3.0.2"
   },
   "devDependencies": {
-    "from": "~0.1.3",
-    "tape": "~3.0.0",
-    "split": "~0.3.0"
-  },
-  "directories": {
-    "example": "examples",
-    "test": "test"
+    "from2-array": "0.0.4",
+    "tape": "~4.9.1"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/timoxley/switchstream.git"
+    "url": "git://github.com/vweevers/switch-writable.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vweevers/switch-writable/issues"
   },
   "keywords": [
     "switch",
     "stream",
     "toggle",
-    "select"
-  ],
-  "bugs": {
-    "url": "https://github.com/timoxley/switchstream/issues"
-  }
+    "select",
+    "writable"
+  ]
 }

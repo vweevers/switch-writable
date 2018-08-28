@@ -1,47 +1,111 @@
-"use strict"
+'use strict'
 
-var through = require('through2')
-var PassThrough = require('readable-stream').PassThrough
-var duplexer = require('duplexer2')
+const Writable = require('readable-stream').Writable
+const finished = require('readable-stream').finished
+const after = require('after')
+const noop = function () {}
 
-module.exports = function(options, fn) {
-  if (!fn) fn = options, options = undefined
-  options = options || { objectMode: true, bubbleErrors: false }
+module.exports = function (options, map) {
+  if (typeof options === 'function') {
+    map = options
+    options = {}
+  } else if (options == null) {
+    options = {}
+  }
 
-  function between(streams) {
-    var aggregator = new PassThrough(options)
-    // pipe all streams into aggregator
-    Object.keys(streams).forEach(function(key) {
-      if (streams[key].pipe) streams[key].pipe(aggregator)
-    })
+  const objectMode = options.objectMode !== false
+  const highWaterMark = options.highWaterMark || 16
+  const def = options.default != null ? options.default : 'default'
 
-    var readable = through(options, function(data, enc, done) {
-      if (fn.length < 3) {
-        // sync
-        handleResult(null, fn.call(this, data, enc))
+  function between (streams) {
+    const targets = values(streams)
+    const writable = Writable({ objectMode, highWaterMark, write, final, destroy })
+    const active = new Set()
+
+    watch(writable)
+    targets.filter(isEager).forEach(watch)
+
+    return writable
+
+    function write (data, enc, next) {
+      const key = map(data, enc)
+      let target = streams[key] || streams[def]
+
+      if (!target) {
+        const json = JSON.stringify(key)
+        return this.destroy(new Error(`No stream for key ${json}`))
+      }
+
+      if (isLazy(target)) {
+        target = streams[key] = target()
+        watch(target)
+      }
+
+      if (target.destroyed || !active.has(target)) {
+        // The target may still emit an error, allow that to bubble
+        // up before we destroy (which would hide the original error).
+        return process.nextTick(() => {
+          this.destroy(new Error('Premature close'))
+        })
+      }
+
+      if (target.write(data)) {
+        next()
       } else {
-        // async
-        fn.call(this, data, enc, handleResult)
+        target.once('drain', next)
       }
+    }
 
-      function handleResult(err, result) {
-        if (err) return done(err)
-        if (Array.isArray(streams)) result = parseInt(Number(result), 10)
-        var targetStream = streams[result]
-        if (!targetStream) return done(new Error('no stream for ' + typeof result + ': ' + result))
-        targetStream.write(data)
-        done()
+    function final (callback) {
+      const remaining = targets.filter(t => active.has(t))
+      const next = after(remaining.length, callback)
+
+      for (let target of remaining) {
+        target.end(next)
       }
-    })
+    }
 
-    readable.on('error', function(err) {
-      // this prevents throw.
-      // errors seem to get bubbled to the duplexer anyway?
-      // note options.bubbleErrors is false?
-    })
+    function destroy (err, callback) {
+      this.cork()
+      callback(err)
+    }
 
-    return duplexer(options, readable, aggregator)
+    function watch (stream) {
+      active.add(stream)
+
+      finished(stream, function (err) {
+        active.delete(stream)
+        if (err) destroyAll(err)
+      })
+    }
+
+    function destroyAll (err) {
+      const remaining = Array.from(active)
+
+      active.clear()
+
+      for (let stream of remaining) {
+        stream.cork()
+        stream.destroy(err)
+      }
+    }
   }
 
   return between.between = between
+}
+
+function isLazy (stream) {
+  return typeof stream === 'function'
+}
+
+function isEager (stream) {
+  return typeof stream !== 'function'
+}
+
+function values (obj) {
+  if (Array.isArray(obj)) {
+    return obj
+  } else {
+    return Object.keys(obj).map(k => obj[k])
+  }
 }

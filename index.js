@@ -20,9 +20,8 @@ module.exports = function (options, map) {
   function between (streams) {
     const targets = values(streams)
     const writable = Writable({ objectMode, highWaterMark, write, final, destroy })
-    const active = new Set()
+    const active = new Set([writable])
 
-    watch(writable)
     targets.filter(isEager).forEach(watch)
 
     return writable
@@ -67,6 +66,8 @@ module.exports = function (options, map) {
 
     function destroy (err, callback) {
       this.cork()
+      active.delete(writable)
+      destroyAll(err || new Error('Premature close'))
       callback(err)
     }
 

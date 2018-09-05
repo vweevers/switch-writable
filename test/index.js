@@ -23,7 +23,7 @@ function from (arr) {
   }
 }
 
-function write (fn) {
+function write (fn, final) {
   return Writable({
     objectMode: true,
     write (data, enc, next) {
@@ -33,7 +33,8 @@ function write (fn) {
         fn.call(this, data)
         next()
       }
-    }
+    },
+    final
   })
 }
 
@@ -287,4 +288,37 @@ test('default key (indexed streams)', function(t) {
     })
   ]))
   .on('finish', t.pass.bind(t, 'finish'))
+})
+
+test('waits for finish of target streams', function(t) {
+  let count = 0
+
+  t.plan(1)
+
+  from([0,1]).pipe(Switch(() => 0).between([
+    write(function(data, next) {
+      setTimeout(() => {
+        count++
+        next()
+      }, 500)
+    }, function final (next) {
+      setTimeout(() => {
+        count++
+        next()
+      }, 500)
+    })
+  ])).on('finish', () => {
+    t.is(count, 3)
+  })
+})
+
+test('does not swallow own error', function(t) {
+  t.plan(2)
+
+  from([0,1]).pipe(Switch(() => 1).between([
+    write(noop)
+  ])).once('error', function (err) {
+    t.is(this.listenerCount('error'), 0, 'no internal error listeners')
+    t.is(err.message, 'No stream for key 1')
+  })
 })

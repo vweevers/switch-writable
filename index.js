@@ -20,7 +20,7 @@ module.exports = function (options, map) {
   function between (streams) {
     const targets = values(streams)
     const writable = Writable({ objectMode, highWaterMark, write, final, destroy })
-    const active = new Set([writable])
+    const active = new Set()
 
     targets.filter(isEager).forEach(watch)
 
@@ -56,26 +56,24 @@ module.exports = function (options, map) {
     }
 
     function final (callback) {
-      const remaining = targets.filter(t => active.has(t))
-      const next = after(remaining.length, callback)
+      const next = after(active.size, callback)
 
-      for (let target of remaining) {
+      for (let target of active) {
         target.end(next)
       }
     }
 
     function destroy (err, callback) {
       this.cork()
-      active.delete(writable)
       destroyAll(err || new Error('Premature close'))
       callback(err)
     }
 
-    function watch (stream) {
-      active.add(stream)
+    function watch (target) {
+      active.add(target)
 
-      finished(stream, function (err) {
-        active.delete(stream)
+      finished(target, function (err) {
+        active.delete(target)
         if (err) destroyAll(err)
       })
     }
@@ -88,6 +86,10 @@ module.exports = function (options, map) {
       for (let stream of remaining) {
         stream.cork()
         stream.destroy(err)
+      }
+
+      if (!writable.destroyed) {
+        writable.destroy(err)
       }
     }
   }

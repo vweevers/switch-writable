@@ -5,6 +5,7 @@ const test = require('tape')
 const from2 = require('from2-array').obj
 const Writable = require('readable-stream').Writable
 const Readable = require('readable-stream').Readable
+const pipeline = require('readable-stream').pipeline
 const noop = function () {}
 
 function from (arr) {
@@ -310,6 +311,43 @@ test('waits for finish of target streams', function(t) {
   ])).on('finish', () => {
     t.is(count, 3)
   })
+})
+
+test('nested switch stream', function (t) {
+  t.plan(2)
+
+  function factory (target) {
+    return Switch(() => 0).between([target])
+  }
+
+  pipeline(from([0]), factory(factory(
+    write(function (data, next) {
+      t.pass('write')
+      next()
+    })
+  )), (err) => {
+    t.ifError(err, 'no error')
+  })
+})
+
+test('waits for lazy targets to finish', function (t) {
+  t.plan(1)
+
+  pipeline(
+    from([0]),
+    Switch((data) => 'foo')({ foo: () => dest() }),
+    () => t.fail('should not finish')
+  )
+
+  function dest () {
+    return new Writable({
+      objectMode: true,
+      write (data, enc, next) {
+        t.is(data, 0, 'got write')
+        // Don't call next
+      }
+    })
+  }
 })
 
 test('does not swallow own error', function(t) {

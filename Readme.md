@@ -8,6 +8,7 @@
 [![Travis build status](https://img.shields.io/travis/vweevers/switch-writable.svg?label=travis)](http://travis-ci.org/vweevers/switch-writable)
 [![AppVeyor build status](https://img.shields.io/appveyor/ci/vweevers/switch-writable.svg?label=appveyor)](https://ci.appveyor.com/project/vweevers/switch-writable)
 <!-- [![Dependency status](https://img.shields.io/david/vweevers/switch-writable.svg)](https://david-dm.org/vweevers/switch-writable) -->
+[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ## Usage
 

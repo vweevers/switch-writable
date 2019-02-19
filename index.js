@@ -3,7 +3,6 @@
 const Writable = require('readable-stream').Writable
 const finished = require('readable-stream').finished
 const after = require('after')
-const noop = function () {}
 
 module.exports = function (options, map) {
   if (typeof options === 'function') {
@@ -94,7 +93,8 @@ module.exports = function (options, map) {
     }
   }
 
-  return between.between = between
+  between.between = between
+  return between
 }
 
 function isLazy (stream) {

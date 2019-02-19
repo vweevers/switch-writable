@@ -1,13 +1,13 @@
-# switch-writable <sup>*WIP*</sup>
+# switch-writable
 
 > **Dynamically select a stream's writable target.**  
 > Adapted from [switchstream](https://github.com/timoxley/switchstream).
 
-<!-- [![npm status](http://img.shields.io/npm/v/switch-writable.svg)](https://www.npmjs.org/package/switch-writable) -->
-<!-- [![node](https://img.shields.io/node/v/switch-writable.svg)](https://www.npmjs.org/package/switch-writable) -->
+[![npm status](http://img.shields.io/npm/v/switch-writable.svg)](https://www.npmjs.org/package/switch-writable)
+[![node](https://img.shields.io/node/v/switch-writable.svg)](https://www.npmjs.org/package/switch-writable)
 [![Travis build status](https://img.shields.io/travis/vweevers/switch-writable.svg?label=travis)](http://travis-ci.org/vweevers/switch-writable)
 [![AppVeyor build status](https://img.shields.io/appveyor/ci/vweevers/switch-writable.svg?label=appveyor)](https://ci.appveyor.com/project/vweevers/switch-writable)
-<!-- [![Dependency status](https://img.shields.io/david/vweevers/switch-writable.svg)](https://david-dm.org/vweevers/switch-writable) -->
+[![Dependency status](https://img.shields.io/david/vweevers/switch-writable.svg)](https://david-dm.org/vweevers/switch-writable)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ## Usage

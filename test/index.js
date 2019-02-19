@@ -330,6 +330,26 @@ test('nested switch stream', function (t) {
   })
 })
 
+test('nested lazy switch stream', function (t) {
+  t.plan(3)
+
+  function factory (target) {
+    return Switch(() => 0)([() => target])
+  }
+
+  pipeline(from([0]), factory(factory(
+    write(function (data, next) {
+      t.pass('write')
+      next()
+    }, function final (next) {
+      t.pass('final')
+      next()
+    })
+  )), (err) => {
+    t.ifError(err, 'no error')
+  })
+})
+
 test('waits for lazy targets to finish', function (t) {
   t.plan(1)
 
